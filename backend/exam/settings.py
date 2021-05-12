@@ -28,7 +28,7 @@ DEBUG = False
 
 SITE_ID = 1
 SITE_PROTOCOL = "https://"
-SITE_DOMAIN = "planner.new-app.dev"
+SITE_DOMAIN = "exam.new-app.dev"
 
 ALLOWED_HOSTS = [
     "localhost",
