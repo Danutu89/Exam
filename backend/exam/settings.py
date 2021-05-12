@@ -157,6 +157,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
 ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = "email"
 AUTH_USER_MODEL = "users.User"
 
 REST_FRAMEWORK = {
