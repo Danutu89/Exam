@@ -1,0 +1,89 @@
+version: "3.7"
+networks:
+  exam:
+    name: exam
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 183.12.0.0/16
+          ip_range: 183.12.0.0/24
+          gateway: 183.12.0.1
+services:
+  postgresql:
+    container_name: Exam-Postgres
+    image: "bitnami/postgresql:latest"
+    ports:
+      - "5432:5432"
+    volumes:
+      - "postgresql_data:/bitnami/postgresql"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      exam:
+        ipv4_address: 183.12.0.2
+  api:
+    container_name: Exam-Django
+    image: exam-api:dev
+    command: "pypy manage.py runserver  0.0.0.0:80"
+    environment:
+      - DEBUG=true
+      - PORT=80
+    ports:
+      - "5000:80"
+    working_dir: /root/api
+    volumes:
+      - "./backend/:/root/api:cached"
+    networks:
+      exam:
+        ipv4_address: 183.12.0.4
+    depends_on:
+      - postgresql
+  frontend:
+    container_name: Exam-Svelte
+    image: exam-frontend:dev
+    command: "npm run dev --host"
+    environment:
+      - NODE_ENV=dev
+      - PORT=3000
+    ports:
+      - "3000:3000"
+      - "24678:24678"
+    working_dir: /root/frontend
+    volumes:
+      - "./frontend:/root/frontend:cached"
+    networks:
+      exam:
+        ipv4_address: 183.12.0.9
+    depends_on:
+      - api
+  nginx:
+    container_name: Exam-Nginx
+    image: "bitnami/nginx:1.19.8"
+    ports:
+      - "80:8080"
+      - "443:8443"
+    extra_hosts:
+      - "dockerhost:172.24.96.43"
+    environment:
+      - NGINX_HTTP_PORT_NUMBER=8080
+      - NGINX_HTTPS_PORT_NUMBER=8080
+    volumes:
+      - "./nginx/default.conf:/opt/bitnami/nginx/conf/server_blocks/exam.conf:ro"
+      - "./nginx/nginx.conf:/opt/bitnami/nginx/conf/nginx.conf:ro"
+      # - "./nginx/stream.conf:/opt/bitnami/nginx/conf/stream_blocks/stream.conf:ro"
+      #- "/etc/nginx/proxy_params:/opt/bitnami/nginx/conf/proxy_params:ro"
+    networks:
+      exam:
+        ipv4_address: 183.12.0.7
+    links:
+      - "api:api"
+      - "frontend:frontend"
+    depends_on:
+      - postgresql
+      - api
+      - frontend
+volumes:
+  redis_data:
+    driver: local
+  postgresql_data:
+    driver: local
